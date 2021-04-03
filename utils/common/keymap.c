@@ -10,7 +10,9 @@
 #include <limits.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#ifndef ANDROID
 #include <argp.h>
+#endif
 
 #include "keymap.h"
 #include "toml.h"
