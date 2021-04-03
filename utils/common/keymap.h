@@ -4,6 +4,10 @@
 
 #include <stdint.h>
 
+#ifdef ANDROID
+typedef int error_t;
+#endif
+
 struct keymap {
 	struct keymap *next;
 	char *name;
