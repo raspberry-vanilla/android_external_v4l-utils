@@ -27,7 +27,11 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#ifndef ANDROID
 #include <argp.h>
+#else
+#include <getopt.h>
+#endif
 #include <time.h>
 #include <stdbool.h>
 
@@ -239,6 +243,7 @@ static int parse_code(const char *string)
 const char *argp_program_version = "IR keytable control version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
+#ifndef ANDROID
 static const char doc[] = N_(
 	"\nLists Remote Controller devices, loads rc keymaps, tests events, and adjusts\n"
 	"other Remote Controller options. Rather than loading a rc keymap, it is also\n"
@@ -259,7 +264,49 @@ static const char doc[] = N_(
 	"  CFGFILE   - configuration file that associates a driver/table name with\n"
 	"              a keymap file\n"
 	"\nOptions can be combined together.");
+#else
+static const char doc[] = {
+	"\nLists Remote Controller devices, loads rc keymaps, tests events, and adjusts\n"
+	"other Remote Controller options. Rather than loading a rc keymap, it is also\n"
+	"possible to set protocol decoders and set rc scancode to keycode mappings\n"
+	"directly.\n"
 
+	"You need to have read permissions on /dev/input for the program to work\n"
+	"\nOn the options below, the arguments are:\n"
+	"  SYSDEV    - the rc device as found at /sys/class/rc\n"
+	"  KEYMAP    - a keymap file with protocols and scancode to keycode mappings\n"
+	"  SCANKEY   - a set of scancode1=keycode1,scancode2=keycode2.. value pairs\n"
+	"  PROTOCOL  - protocol name (nec, rc-5, rc-6, jvc, sony, sanyo, rc-5-sz, lirc,\n"
+	"              sharp, mce_kbd, xmp, imon, rc-mm, other, all) to be enabled,\n"
+	"              or a bpf protocol name or file\n"
+	"  DELAY     - Delay before repeating a keystroke\n"
+	"  PERIOD    - Period to repeat a keystroke\n"
+	"  PARAMETER - a set of name1=number1[,name2=number2]... for the BPF prototcol\n"
+	"  CFGFILE   - configuration file that associates a driver/table name with\n"
+	"              a keymap file\n"
+	"\nOptions can be combined together.\n\n"
+	"  -a, --auto-load=CFGFILE    Auto-load keymaps, based on a configuration file.\n"
+	"                             Only works with --sysdev.\n"
+	"  -c, --clear                Clears the scancode to keycode mappings\n"
+	"  -d, --device=SYSDEV        ir device to control\n"
+	"  -D, --delay=DELAY          Sets the delay before repeating a keystroke\n"
+	"  -e, --parameter=PARAMETER  Set a parameter for the protocol decoder\n"
+	"  -k, --set-key=SCANKEY      Change scan/key pairs\n"
+	"  -p, --protocol=PROTOCOL    Protocol to enable (the other ones will be disabled).\n"
+	"                             To enable more than one, use the option more than one time\n"
+	"  -P, --period=PERIOD        Sets the period to repeat a keystroke\n"
+	"  -r, --read                 reads the current scancode/keycode mapping\n"
+	"  -s, --sysdev=SYSDEV        rc device to control, defaults to rc0 if not specified\n"
+	"  -t, --test                 Test if IR is generating events\n"
+	"  -T, --test-keymap=KEYMAP   Test if keymap is valid\n"
+	"  -v, --verbose              Enables debug messages\n"
+	"  -w, --write=KEYMAP         Write (adds) the keymap from the specified file\n"
+	"  -?, --help                 Give this help list\n"
+	"  -V, --version              Print program version\n"
+};
+#endif
+
+#ifndef ANDROID
 static const struct argp_option options[] = {
 	{"verbose",	'v',	0,		0,	N_("enables debug messages"), 0},
 	{"clear",	'c',	0,		0,	N_("Clears the scancode to keycode mappings"), 0},
@@ -281,6 +328,26 @@ static const struct argp_option options[] = {
 };
 
 static const char args_doc[] = N_("");
+#else
+static const struct option long_options[] = {
+	{"verbose", no_argument, 0, 'v'},
+	{"clear", no_argument, 0, 'c'},
+	{"sysdev", required_argument, 0, 's'},
+	{"test", no_argument, 0, 't'},
+	{"read", no_argument, 0, 'r'},
+	{"write", required_argument, 0, 'w'},
+	{"set-key", required_argument, 0, 'k'},
+	{"protocol", required_argument, 0, 'p'},
+	{"parameter", required_argument, 0, 'e'},
+	{"delay", required_argument, 0, 'D'},
+	{"period", required_argument, 0, 'P'},
+	{"auto-load", required_argument, 0, 'a'},
+	{"test-keymap", required_argument, 0, 'T'},
+	{"help", no_argument, 0, '?'},
+	{"version", no_argument, 0, 'V'},
+	{ 0, 0, 0, 0 }
+};
+#endif
 
 /* Static vars to store the parameters */
 static char *devclass = NULL;
@@ -526,6 +593,7 @@ err_einval:
 
 }
 
+#ifndef ANDROID
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
 	char *p;
@@ -727,6 +795,211 @@ static struct argp argp = {
 	.args_doc = args_doc,
 	.doc = doc,
 };
+#else
+static error_t parse_opt(int argc, char* argv[])
+{
+	char *p;
+	long key;
+	int rc;
+	int c;
+
+	while (1) {
+		int option_index = 0;
+		c = getopt_long(argc, argv, "vtcD:P:s:rw:a:k:p:e:T:?V", long_options, &option_index);
+		if (c == -1)
+		break;
+
+		switch (c) {
+			case 'v':
+				debug++;
+				break;
+			case 't':
+				test++;
+				break;
+			case 'c':
+				clear++;
+				break;
+			case 'D':
+				delay = strtol(optarg, &p, 10);
+				if (!p || *p || delay < 0)
+					fprintf(stderr, _("Invalid delay: %s\n"), optarg);
+					goto err_inval;
+				break;
+			case 'P':
+				period = strtol(optarg, &p, 10);
+				if (!p || *p || period < 0)
+					fprintf(stderr, _("Invalid period: %s\n"), optarg);
+					goto err_inval;
+				break;
+			case 's':
+				devclass = optarg;
+				break;
+			case 'r':
+				readtable++;
+				break;
+			case 'w': {
+				struct keymap *map = NULL;
+
+				rc = parse_keymap(optarg, &map, debug);
+				if (rc) {
+					fprintf(stderr, _("Failed to read table file %s\n"), optarg);
+					goto err_inval;
+				}
+				if (map->name)
+					fprintf(stderr, _("Read %s table\n"), map->name);
+
+				add_keymap(map, optarg);
+				free_keymap(map);
+				break;
+			}
+			case 'a': {
+				rc = parse_cfgfile(optarg);
+				if (rc)
+					fprintf(stderr, _("Failed to read config file %s\n"), optarg);
+					goto err_inval;
+				break;
+			}
+			case 'k':
+				p = strtok(optarg, ":=");
+				do {
+					struct keytable_entry *ke;
+
+					if (!p) {
+						fprintf(stderr, _("Missing scancode: %s\n"), optarg);
+						goto err_inval;
+					}
+
+					ke = calloc(1, sizeof(*ke));
+					if (!ke) {
+						perror(_("No memory!\n"));
+						return ENOMEM;
+					}
+
+					ke->scancode = strtoull(p, NULL, 0);
+					if (errno) {
+						free(ke);
+						fprintf(stderr, _("Invalid scancode: %s\n"), p);
+						goto err_inval;
+					}
+
+					p = strtok(NULL, ",;");
+					if (!p) {
+						free(ke);
+						fprintf(stderr, _("Missing keycode\n"));
+						goto err_inval;
+					}
+
+					key = parse_code(p);
+					if (key == -1) {
+						key = strtol(p, NULL, 0);
+						if (errno) {
+							free(ke);
+							fprintf(stderr, _("Unknown keycode: %s\n"), p);
+							goto err_inval;
+						}
+					}
+
+					ke->keycode = key;
+
+					if (debug)
+						fprintf(stderr, _("scancode 0x%04llx=%u\n"),
+							ke->scancode, ke->keycode);
+
+					ke->next = keytable;
+					keytable = ke;
+
+					p = strtok(NULL, ":=");
+				} while (p);
+				break;
+			case 'p':
+				for (p = strtok(optarg, ",;"); p; p = strtok(NULL, ",;")) {
+					enum sysfs_protocols protocol;
+
+					protocol = parse_sysfs_protocol(p, true);
+					if (protocol == SYSFS_INVALID) {
+						struct bpf_protocol *b;
+
+						b = malloc(sizeof(*b));
+						b->name = strdup(p);
+						b->param = NULL;
+						b->next = bpf_protocol;
+						bpf_protocol = b;
+					}
+					else {
+						ch_proto |= protocol;
+					}
+				}
+				break;
+			case 'e':
+				p = strtok(optarg, ":=");
+				do {
+					struct protocol_param *param;
+
+					if (!p) {
+						fprintf(stderr, _("Missing parameter name: %s\n"), optarg);
+						goto err_inval;
+					}
+
+					param = malloc(sizeof(*param));
+					if (!p) {
+						perror(_("No memory!\n"));
+						return ENOMEM;
+					}
+
+					param->name = strdup(p);
+
+					p = strtok(NULL, ",;");
+					if (!p) {
+						free(param);
+						fprintf(stderr, _("Missing value\n"));
+						goto err_inval;
+					}
+
+					param->value = strtol(p, NULL, 0);
+					if (errno) {
+						free(param);
+						fprintf(stderr, _("Unknown keycode: %s\n"), p);
+						goto err_inval;
+					}
+
+					if (debug)
+						fprintf(stderr, _("parameter %s=%ld\n"),
+							param->name, param->value);
+
+					param->next = bpf_parameter;
+					bpf_parameter = param;
+
+					p = strtok(NULL, ":=");
+				} while (p);
+				break;
+			case 'T':
+				test_keymap++;
+				struct keymap *map ;
+
+				rc = parse_keymap(optarg, &map, debug);
+				if (rc)
+					fprintf(stderr, _("Failed to read table file %s\n"), optarg);
+					goto err_inval;
+				add_keymap(map, optarg);
+				free_keymap(map);
+				break;
+			case '?':
+				fprintf(stderr, doc);
+				fprintf(stderr, _("\nReport bugs to %s.\n"), argp_program_bug_address);
+				exit(0);
+			case 'V':
+				fprintf (stderr, _("%s\n"), argp_program_version);
+				exit(0);
+			default:
+				return E2BIG;
+		}
+	}
+	return 0;
+
+err_inval:
+	return E2BIG;
+}
+#endif
 
 static void prtcode(unsigned long long scancode, int keycode)
 {
@@ -2042,7 +2315,11 @@ int main(int argc, char *argv[])
 	textdomain (PACKAGE);
 #endif
 
+#ifndef ANDROID
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP, 0, 0);
+#else
+	parse_opt(argc, argv);
+#endif
 
 	if (test_keymap)
 		return 0;
