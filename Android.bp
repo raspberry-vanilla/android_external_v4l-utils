@@ -1,0 +1,43 @@
+//
+// Copyright (C) 2025 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_defaults {
+    name: "v4l-utils_defaults",
+    header_libs: [
+        "v4l-utils_headers",
+    ],
+    cflags: [
+        "-DPACKAGE_VERSION=\"1.29.0\"",
+        "-DV4L_UTILS_VERSION=\"1.29.0\"",
+    ],
+    c_std: "gnu99",
+    cpp_std: "gnu++11",
+}
+
+cc_library_headers {
+    name: "v4l-utils_headers",
+    vendor: true,
+    export_include_dirs: [
+        "include",
+        "utils/common",
+    ],
+}
+
+genrule {
+    name: "media_bus_format_codes_header",
+    srcs: ["include/linux/media-bus-format.h"],
+    tool_files: ["utils/gen_media_bus_format_codes.sh"],
+    out: ["media-bus-format-codes.h"],
+    cmd: "$(location) $(in) > $(out)",
+}
+
+genrule {
+    name: "media_bus_format_names_header",
+    srcs: ["include/linux/media-bus-format.h"],
+    tool_files: ["utils/gen_media_bus_format_names.sh"],
+    out: ["media-bus-format-names.h"],
+    cmd: "$(location) $(in) > $(out)",
+}

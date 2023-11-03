@@ -1,0 +1,27 @@
+//
+// Copyright (C) 2025 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_binary {
+    name: "media-ctl",
+    vendor: true,
+    generated_headers: [
+        "media_bus_format_codes_header",
+        "media_bus_format_names_header",
+    ],
+    srcs: [
+        "libmediactl.c",
+        "libv4l2subdev.c",
+        "media-ctl.c",
+        "options.c",
+    ],
+    shared_libs: [
+        "libudev",
+    ],
+    cflags: [
+        "-DHAVE_LIBUDEV",
+    ],
+    defaults: ["v4l-utils_defaults"],
+}

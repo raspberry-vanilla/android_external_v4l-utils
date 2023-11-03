@@ -1,0 +1,21 @@
+//
+// Copyright (C) 2025 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_binary {
+    name: "ir-keytable",
+    vendor: true,
+    srcs: [
+        "ir-encode.c",
+        "keymap.c",
+        "keytable.c",
+        "toml.c",
+    ],
+    cflags: [
+        "-DIR_KEYTABLE_SYSTEM_DIR=\"/vendor/etc/rc_keymaps\"",
+        "-DIR_KEYTABLE_USER_DIR=\"/vendor/etc/rc_keymaps\"",
+    ],
+    defaults: ["v4l-utils_defaults"],
+}

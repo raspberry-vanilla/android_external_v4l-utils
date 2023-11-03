@@ -1,0 +1,19 @@
+//
+// Copyright (C) 2025 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_library_static {
+    name: "libcecutil",
+    vendor: true,
+    srcs: [
+        "cec-info.cpp",
+        "cec-log.cpp",
+        "cec-parse.cpp",
+    ],
+    export_include_dirs: [
+        ".",
+    ],
+    defaults: ["v4l-utils_defaults"],
+}
