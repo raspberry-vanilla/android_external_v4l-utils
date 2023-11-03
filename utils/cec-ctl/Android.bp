@@ -1,0 +1,21 @@
+//
+// Copyright (C) 2023 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_binary {
+    name: "cec-ctl",
+    vendor: true,
+    srcs: [
+        "cec-ctl.cpp",
+        "cec-pin.cpp",
+    ],
+    header_libs: ["v4l-utils_headers"],
+    static_libs: ["libcecutil"],
+    cflags: [
+        "-include android-config.h",
+        "-Wno-missing-field-initializers",
+        "-Wno-unused-parameter",
+    ],
+}
