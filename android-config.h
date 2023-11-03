@@ -59,10 +59,10 @@
 /* #undef ICONV_CONST */
 
 /* ir-keytable preinstalled tables directory */
-#define IR_KEYTABLE_SYSTEM_DIR "/lib/udev/rc_keymaps"
+#define IR_KEYTABLE_SYSTEM_DIR "/vendor/etc/rc_keymaps"
 
 /* ir-keytable user defined tables directory */
-#define IR_KEYTABLE_USER_DIR "/system/etc/rc_keymaps"
+#define IR_KEYTABLE_USER_DIR "/vendor/etc/rc_keymaps"
 
 /* libv4l1 private lib directory */
 #define LIBV4L1_PRIV_DIR "/system/lib/libv4l"
