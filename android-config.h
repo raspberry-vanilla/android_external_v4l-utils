@@ -99,7 +99,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.0"
+#define PACKAGE_VERSION "1.25.0"
 
 /* Define to the type that is the result of default argument promotions of
    type mode_t. */
@@ -109,10 +109,10 @@
 #define STDC_HEADERS 1
 
 /* v4l-utils version string */
-#define V4L_UTILS_VERSION "1.1.0"
+#define V4L_UTILS_VERSION "1.25.0"
 
 /* Version number of package */
-#define VERSION "1.1.0"
+#define VERSION "1.25.0"
 
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef mode_t */
