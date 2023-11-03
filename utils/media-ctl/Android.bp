@@ -1,0 +1,22 @@
+//
+// Copyright (C) 2025 KonstaKANG
+//
+// SPDX-License-Identifier: GPL-2.0
+//
+
+cc_binary {
+    name: "media-ctl",
+    vendor: true,
+    srcs: [
+        "libmediactl.c",
+        "libv4l2subdev.c",
+        "media-ctl.c",
+        "options.c",
+    ],
+    header_libs: ["v4l-utils_headers"],
+    shared_libs: ["libudev"],
+    cflags: [
+        "-include android-config.h",
+        "-DHAVE_LIBUDEV",
+    ],
+}
