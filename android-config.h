@@ -117,4 +117,9 @@
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef mode_t */
 
+/* From bionic linux/compiler.h for linux/eventpoll.h */
+#ifndef __force
+#define __force
+#endif
+
 #endif
