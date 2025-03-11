@@ -301,10 +301,14 @@ static void print_version()
 {
 #define STR(x) #x
 #define STRING(x) STR(x)
+#ifndef ANDROID
 	printf("v4l2-ctl %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
 	if (strlen(STRING(GIT_SHA)))
 		printf("v4l2-ctl SHA: %s %s\n",
 		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
+#else
+	printf("v4l2-ctl %s\n", PACKAGE_VERSION);
+#endif
 }
 
 int test_ioctl(int fd, unsigned long cmd, void *arg)
