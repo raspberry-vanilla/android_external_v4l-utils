@@ -46,10 +46,14 @@ static void print_version()
 {
 #define STR(x) #x
 #define STRING(x) STR(x)
+#ifndef ANDROID
 	printf("media-ctl %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
 	if (strlen(STRING(GIT_SHA)))
 		printf("media-ctl SHA: %s %s\n",
 		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
+#else
+	printf("media-ctl %s\n", PACKAGE_VERSION);
+#endif
 }
 
 static void usage(const char *argv0)
