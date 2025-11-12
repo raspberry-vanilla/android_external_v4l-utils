@@ -18,7 +18,7 @@ cc_binary {
         "options.c",
     ],
     shared_libs: [
-        "libudev",
+        "libudev-zero",
     ],
     cflags: [
         "-DHAVE_LIBUDEV",
